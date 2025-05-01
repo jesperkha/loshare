@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>File Upload</title>
+		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		<script src="https://unpkg.com/htmx.org@1.9.2/dist/ext/methods.js"></script>
+		<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+	</head>
+	<script>
+		function setLabel(lbl) {
+			let fileChosen = lbl.files.length != 0
+			document.getElementById("file-label").textContent = fileChosen ? lbl.files[0].name : "Choose file"
+		}
+	</script>
+	<style>
+		.htmx-indicator {
+			display: none;
+		}
+		.htmx-request .htmx-indicator {
+			display: inline;
+		}
+		.htmx-request .hide-onload {
+			display: none;
+		}
+	</style>
+	<body class="flex items-center justify-center h-screen bg-gray-100">
+		<div id="upload-container">
+			<form
+				hx-post="/file"
+				hx-target="#upload-container"
+				hx-swap="outerHTML"
+				hx-encoding="multipart/form-data"
+				enctype="multipart/form-data"
+				class="flex items-center bg-white p-6 rounded-lg shadow-md gap-4"
+			>
+				<input type="file" name="file" id="file-upload" required class="hidden" onchange="setLabel(this)" />
+				<label
+					for="file-upload"
+					id="file-label"
+					class="px-4 p-2 bg-gray-100 rounded border cursor-pointer hover:bg-gray-200 hide-onload"
+				>
+					Choose file
+				</label>
+
+				<input type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hide-onload cursor-pointer" value="Upload">
+				</input>
+				<img src="spinner.svg" alt="Loading..." class="w-10 htmx-indicator" />
+			</form>
+		</div>
+	</body>
+</html>

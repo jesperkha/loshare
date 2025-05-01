@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/jesperkha/loshare/config"
 	"github.com/jesperkha/notifier"
@@ -15,10 +16,27 @@ type Server struct {
 }
 
 func New(config *config.Config) *Server {
-	return &Server{
+	s := &Server{
 		mux:    http.NewServeMux(),
 		config: config,
 	}
+
+	fs := http.FileServer(http.Dir("web"))
+	s.handle("/", func(w http.ResponseWriter, r *http.Request) {
+		fs.ServeHTTP(w, r)
+	})
+
+	s.handle("POST /file", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("new request!")
+		time.Sleep(time.Second * 3)
+		w.Write([]byte("hgello"))
+	})
+
+	return s
+}
+
+func (s *Server) handle(path string, h http.HandlerFunc) {
+	s.mux.Handle(path, h)
 }
 
 func (s *Server) ListenAndServe(notif *notifier.Notifier) {
