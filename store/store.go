@@ -20,16 +20,16 @@ const (
 	GB = 1000 * MB
 
 	// Max size of uploaded files in bytes
-	MAX_SIZE = 4 * GB
+	MAX_SIZE = 2 * GB
 
 	// Length of file codes
 	CODE_LEN = 4
 
 	// How long a file is kept before deletion
-	EXPIRATION = time.Second * 10
+	EXPIRATION = time.Minute * 10
 
 	// How often to poll and purge expired files
-	REFRESH_RATE = time.Second * 1
+	REFRESH_RATE = time.Second * 10
 )
 
 type Store struct {
