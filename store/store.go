@@ -37,6 +37,8 @@ type File struct {
 }
 
 func New(config *config.Config) *Store {
+	os.Mkdir(config.DumpDir, os.ModePerm)
+
 	return &Store{
 		config: config,
 		files:  make(map[string]File),
