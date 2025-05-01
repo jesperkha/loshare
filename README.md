@@ -20,4 +20,4 @@ A `.dump` folder will be create and used to temporarily store files.
 
 The UI has a file upload button and download for a given file code. You will be given a code upon uploading a file. Files are deleted after a set timeout (default is 10 minutes).
 
-<img src=".github/demo.png" width="50%">
+<img src=".github/demo.png" width="60%">
