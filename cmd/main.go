@@ -7,6 +7,7 @@ import (
 
 	"github.com/jesperkha/loshare/config"
 	"github.com/jesperkha/loshare/server"
+	"github.com/jesperkha/loshare/store"
 	"github.com/jesperkha/notifier"
 )
 
@@ -14,9 +15,11 @@ func main() {
 	notif := notifier.New()
 
 	config := config.Load()
-	server := server.New(config)
+	store := store.New(config)
+	server := server.New(config, store)
 
 	go server.ListenAndServe(notif)
+	go store.Run(notif)
 
 	notif.NotifyOnSignal(os.Interrupt, syscall.SIGTERM)
 	log.Println("shutdown")

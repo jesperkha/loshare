@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	Port string
+	Port    string
+	DumpDir string
 }
 
 func Load() *Config {
@@ -17,7 +18,8 @@ func Load() *Config {
 	}
 
 	return &Config{
-		Port: toGoPort(os.Getenv("PORT")),
+		Port:    toGoPort(os.Getenv("PORT")),
+		DumpDir: os.Getenv("DUMP_DIR"),
 	}
 }
 

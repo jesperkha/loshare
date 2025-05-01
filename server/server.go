@@ -16,11 +16,11 @@ type Server struct {
 	store  *store.Store
 }
 
-func New(config *config.Config) *Server {
+func New(config *config.Config, store *store.Store) *Server {
 	s := &Server{
 		mux:    http.NewServeMux(),
 		config: config,
-		store:  store.New(),
+		store:  store,
 	}
 
 	s.mux.Handle("/", http.FileServer(http.Dir("web")))
@@ -33,13 +33,13 @@ func New(config *config.Config) *Server {
 			return
 		}
 
-		if head.Size > store.MAX_SIZE {
+		id, err := s.store.SaveFile(head.Filename, int(head.Size))
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			log.Printf("rejected '%s': file was too large (%d bytes)", head.Filename, head.Size)
+			log.Println(err)
 			return
 		}
 
-		id := s.store.SaveFile(head.Filename, int(head.Size))
 		log.Printf("new file uploaded: '%s' of %d bytes", head.Filename, head.Size)
 		w.Write([]byte(id))
 	})
