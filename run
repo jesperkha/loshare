@@ -1,0 +1,7 @@
+#!/bin/bash
+
+go build -o loshare cmd/main.go
+
+nohup loshare > /dev/null 2>&1 &
+
+echo $! > pid.txt
