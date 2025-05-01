@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -25,15 +27,35 @@ func New(config *config.Config, store *store.Store) *Server {
 
 	s.mux.Handle("/", http.FileServer(http.Dir("web")))
 
+	s.mux.HandleFunc("GET /file/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		filename, reader, err := s.store.GetFile(id)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Println(err)
+			return
+		}
+
+		defer reader.Close()
+
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachement;filename=%s", filename))
+		w.Write([]byte("hello from my file"))
+
+		io.Copy(w, reader)
+	})
+
 	s.mux.HandleFunc("POST /file", func(w http.ResponseWriter, r *http.Request) {
-		_, head, err := r.FormFile("file")
+		file, head, err := r.FormFile("file")
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
 			return
 		}
 
-		id, err := s.store.SaveFile(head.Filename, int(head.Size))
+		defer file.Close()
+
+		id, err := s.store.SaveFile(head.Filename, int(head.Size), file)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Println(err)

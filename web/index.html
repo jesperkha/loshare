@@ -7,14 +7,28 @@
 		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
 		<script src="https://unpkg.com/htmx.org@1.9.2/dist/ext/methods.js"></script>
 		<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap"
+			rel="stylesheet"
+		/>
 	</head>
 	<script>
 		function setLabel(lbl) {
 			let fileChosen = lbl.files.length != 0
 			document.getElementById("file-label").textContent = fileChosen ? lbl.files[0].name : "Choose file"
 		}
+		function getFile() {
+			const url = "/file/" + document.getElementById("code-input").value
+			window.location = url
+		}
 	</script>
 	<style>
+		* {
+			font-family: "Inter";
+			font-weight: 300;
+		}
 		.htmx-indicator {
 			display: none;
 		}
@@ -26,14 +40,32 @@
 		}
 	</style>
 	<body class="flex items-center justify-center h-screen bg-gray-100">
-		<div id="upload-container">
+		<div id="upload-container" class="space-y-4">
+			<p class="w-full text-center">Enter code</p>
+			<div class="flex items-center bg-white p-6 rounded-lg shadow-md gap-4 flex-col">
+				<input
+					id="code-input"
+					maxlength="4"
+					type="text"
+					class="p-2 bg-gray-100 rounded text-center"
+					placeholder="0000"
+					value=""
+				/>
+				<button
+					onclick="getFile()"
+					class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 hide-onload cursor-pointer w-full"
+				>
+					Download
+				</button>
+			</div>
+			<p class="w-full text-center">or</p>
 			<form
 				hx-post="/file"
 				hx-target="#upload-container"
 				hx-swap="outerHTML"
 				hx-encoding="multipart/form-data"
 				enctype="multipart/form-data"
-				class="flex items-center bg-white p-6 rounded-lg shadow-md gap-4"
+				class="flex items-center bg-white p-6 rounded-lg shadow-md gap-2 justify-center"
 			>
 				<input type="file" name="file" id="file-upload" required class="hidden" onchange="setLabel(this)" />
 				<label
@@ -44,8 +76,11 @@
 					Choose file
 				</label>
 
-				<input type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hide-onload cursor-pointer" value="Upload">
-				</input>
+				<input
+					type="submit"
+					class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hide-onload cursor-pointer"
+					value="Upload"
+				/>
 				<img src="spinner.svg" alt="Loading..." class="w-10 htmx-indicator" />
 			</form>
 		</div>
