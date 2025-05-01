@@ -40,8 +40,6 @@ func New(config *config.Config, store *store.Store) *Server {
 		defer reader.Close()
 
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachement;filename=%s", filename))
-		w.Write([]byte("hello from my file"))
-
 		io.Copy(w, reader)
 	})
 
@@ -62,8 +60,15 @@ func New(config *config.Config, store *store.Store) *Server {
 			return
 		}
 
-		log.Printf("new file uploaded: '%s' of %d bytes", head.Filename, head.Size)
-		w.Write([]byte(id))
+		resp := fmt.Sprintf(`
+			<div class="flex flex-col gap-4">
+				<p class="w-full text-center">Code for %s</p>
+				<p class="font-bold text-green-600 w-full text-center text-5xl">%s</p>
+			</div>
+		`, head.Filename, id)
+
+		log.Printf("new file uploaded: '%s' of %d bytes, id=%s", head.Filename, head.Size, id)
+		w.Write([]byte(resp))
 	})
 
 	return s
