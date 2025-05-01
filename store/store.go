@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"io"
+	"log"
 	"math/rand/v2"
 	"os"
 	"path"
@@ -14,13 +15,21 @@ import (
 )
 
 const (
-	KB       = 1000
-	MB       = 1000 * KB
-	GB       = 1000 * MB
+	KB = 1000
+	MB = 1000 * KB
+	GB = 1000 * MB
+
+	// Max size of uploaded files in bytes
 	MAX_SIZE = 4 * GB
 
-	CODE_LEN   = 4
-	EXPIRATION = time.Minute * 5
+	// Length of file codes
+	CODE_LEN = 4
+
+	// How long a file is kept before deletion
+	EXPIRATION = time.Second * 10
+
+	// How often to poll and purge expired files
+	REFRESH_RATE = time.Second * 1
 )
 
 type Store struct {
@@ -37,6 +46,7 @@ type File struct {
 }
 
 func New(config *config.Config) *Store {
+	os.RemoveAll(config.DumpDir) // Clear dumpdir
 	os.Mkdir(config.DumpDir, os.ModePerm)
 
 	return &Store{
@@ -80,6 +90,40 @@ func (s *Store) GetFile(id string) (filename string, r io.ReadCloser, err error)
 	return file.Name, r, err
 }
 
+// Run starts a background process to remove expired files.
+func (s *Store) Run(notif *notifier.Notifier) {
+	done, finish := notif.Register()
+	tick := time.NewTicker(REFRESH_RATE)
+
+	for {
+		select {
+		case <-tick.C:
+			if err := s.removeExpiredFiles(); err != nil {
+				log.Println(err)
+			}
+
+		case <-done:
+			finish()
+			return
+		}
+	}
+}
+
+func (s *Store) removeExpiredFiles() error {
+	for _, file := range s.files {
+		if file.Expires.Before(time.Now()) {
+			if err := os.Remove(s.path(file)); err != nil {
+				return err
+			}
+
+			delete(s.files, file.ID)
+			log.Printf("removed file id=%s", file.ID)
+		}
+	}
+
+	return nil
+}
+
 func (s *Store) newId() string {
 	id := strconv.Itoa(len(s.files))
 	for i := len(id); i < CODE_LEN; i++ {
@@ -91,13 +135,6 @@ func (s *Store) newId() string {
 
 func (s *Store) path(f File) string {
 	return path.Join(s.config.DumpDir, f.ID)
-}
-
-func (s *Store) Run(notif *notifier.Notifier) {
-	done, finish := notif.Register()
-
-	<-done
-	finish()
 }
 
 func writeFile(path string, r io.Reader) error {
