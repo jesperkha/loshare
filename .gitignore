@@ -26,3 +26,6 @@ go.work.sum
 
 # dump dir
 .dump
+
+# air temp dir
+tmp
