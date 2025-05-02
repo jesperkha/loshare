@@ -45,10 +45,10 @@
 			<div class="flex items-center bg-white p-6 rounded-lg shadow-md gap-4 flex-col">
 				<input
 					id="code-input"
-					maxlength="4"
+					maxlength="6"
 					type="text"
 					class="p-2 bg-gray-100 rounded text-center"
-					placeholder="0000"
+					placeholder="000000"
 					value=""
 				/>
 				<button
@@ -70,10 +70,11 @@
 				<input type="file" name="file" id="file-upload" required class="hidden" onchange="setLabel(this)" />
 				<label
 					for="file-upload"
-					id="file-label"
 					class="px-4 p-2 bg-gray-100 rounded border cursor-pointer hover:bg-gray-200 hide-onload"
 				>
-					Choose file
+					<span id="file-label" class="block overflow-hidden text-ellipsis whitespace-nowrap text-center w-24"
+						>Choose file</span
+					>
 				</label>
 
 				<input

@@ -55,8 +55,15 @@ func New(config *config.Config, store *store.Store) *Server {
 
 		id, err := s.store.SaveFile(head.Filename, int(head.Size), file)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			resp := fmt.Sprintf(`
+				<div class="flex flex-col gap-4">
+					<p class="font-bold text-red-600 w-full text-center text-5xl">Error</p>
+					<p class="w-full text-center">%s</p>
+				</div>
+			`, err.Error())
+
 			log.Println(err)
+			w.Write([]byte(resp))
 			return
 		}
 

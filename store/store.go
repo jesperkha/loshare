@@ -23,18 +23,26 @@ const (
 	MAX_SIZE = 2 * GB
 
 	// Length of file codes
-	CODE_LEN = 4
+	CODE_LEN = 6
 
 	// How long a file is kept before deletion
 	EXPIRATION = time.Minute * 10
 
 	// How often to poll and purge expired files
-	REFRESH_RATE = time.Second * 10
+	REFRESH_RATE = time.Minute
+
+	// Maxiumum size of temporary store before rejecting files
+	MAX_STORE_SIZE = 4 * GB
 )
 
 type Store struct {
-	files  map[string]File
-	config *config.Config
+	files     map[string]File
+	config    *config.Config
+	totalSize int
+
+	// Use generic writer and reader function to allow easy swapping
+	fileWriter func(path string, r io.Reader) error
+	fileReader func(path string) (io.ReadCloser, error)
 }
 
 type File struct {
@@ -46,19 +54,28 @@ type File struct {
 }
 
 func New(config *config.Config) *Store {
-	os.RemoveAll(config.DumpDir) // Clear dumpdir
-	os.Mkdir(config.DumpDir, os.ModePerm)
-
 	return &Store{
-		config: config,
-		files:  make(map[string]File),
+		config:     config,
+		files:      make(map[string]File),
+		fileWriter: writeFile,
+		fileReader: readFile,
 	}
+}
+
+// Initialize store, clearing and creating dump directory.
+func (s *Store) Init() {
+	os.RemoveAll(s.config.DumpDir)
+	os.Mkdir(s.config.DumpDir, os.ModePerm)
 }
 
 // Saves file to disk temporarily and returns id/code to display to user.
 func (s *Store) SaveFile(filename string, size int, r io.Reader) (string, error) {
 	if size > MAX_SIZE {
-		return "", fmt.Errorf("rejected '%s': file was too large (%d bytes)", filename, size)
+		return "", fmt.Errorf("file is too large: %s", filename)
+	}
+
+	if s.totalSize+size >= MAX_STORE_SIZE {
+		return "", fmt.Errorf("file storage is full or file would overflow cap: %s", filename)
 	}
 
 	id := s.newId()
@@ -70,13 +87,14 @@ func (s *Store) SaveFile(filename string, size int, r io.Reader) (string, error)
 		Expires:  time.Now().Add(EXPIRATION),
 	}
 
-	if err := writeFile(s.path(file), r); err != nil {
+	if err := s.fileWriter(s.path(file), r); err != nil {
 		return "", err
 	}
 
 	// Collision can happen if a file is uploaded at the same time as another
 	// is deleted and the n random numbers appended are identical.
 	s.files[id] = file
+	s.totalSize += file.Size
 	return id, nil
 }
 
@@ -86,7 +104,7 @@ func (s *Store) GetFile(id string) (filename string, r io.ReadCloser, err error)
 		return "", nil, fmt.Errorf("no file with id=%s", id)
 	}
 
-	r, err = readFile(s.path(file))
+	r, err = s.fileReader(s.path(file))
 	return file.Name, r, err
 }
 
@@ -125,11 +143,10 @@ func (s *Store) removeExpiredFiles() error {
 }
 
 func (s *Store) newId() string {
-	id := strconv.Itoa(len(s.files))
-	for i := len(id); i < CODE_LEN; i++ {
+	id := ""
+	for range CODE_LEN {
 		id += strconv.Itoa(rand.IntN(10))
 	}
-
 	return id
 }
 

@@ -13,9 +13,11 @@ import (
 
 func main() {
 	notif := notifier.New()
-
 	config := config.Load()
+
 	store := store.New(config)
+	store.Init()
+
 	server := server.New(config, store)
 
 	go server.ListenAndServe(notif)
