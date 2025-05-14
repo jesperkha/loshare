@@ -14,7 +14,7 @@ cenv fix
 go run cmd/main.go
 ```
 
-A `.dump` folder will be create and used to temporarily store files.
+A `.dump` folder will be created and used to temporarily store files.
 
 ## Screenshots
 
